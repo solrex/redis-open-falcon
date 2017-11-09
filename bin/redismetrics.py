@@ -68,7 +68,7 @@ class RedisMetrics(threading.Thread):
                 'timestamp': timestamp,
                 'step': self.falcon_step,
                 'tags': self.tags,
-                'value': redis_info['used_memory']/redis_info['maxmemory']
+                'value': float(redis_info['used_memory'])/redis_info['maxmemory']
             }
             falcon_metrics.append(falcon_metric)
             #print json.dumps(falcon_metrics)
