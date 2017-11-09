@@ -62,7 +62,7 @@ class RedisMetrics(threading.Thread):
                 falcon_metrics.append(falcon_metric)
             # Self defined metrics
             falcon_metric = {
-                'counterType': 'COUNTER',
+                'counterType': 'GAUGE',
                 'metric': "redis.used_memory_ratio",
                 'endpoint': self.endpoint,
                 'timestamp': timestamp,
