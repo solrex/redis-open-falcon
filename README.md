@@ -1,4 +1,4 @@
-# es-open-falcon
+# redis-open-falcon
 Redis Monitor Script for Open Falcon
 
 ```
