@@ -9,12 +9,6 @@ import requests
 import os
 
 class RedisMetrics(threading.Thread):
-    status_map = {
-        'green': 0,
-        'yellow': 1,
-        'red': 2
-    }
-
     def __init__(self, falcon_url, endpoint, host, port, db = 0, password = '', tags = '', falcon_step = 60, daemon = False):
         self.falcon_url = falcon_url
         self.falcon_step = falcon_step
@@ -30,9 +24,11 @@ class RedisMetrics(threading.Thread):
                               'total_commands_processed',
                               'rejected_connections', 'expired_keys', 'evicted_keys', 'keyspace_hits',
                               'keyspace_misses']
+
         self.counter_keywords = ['total_commands_processed', 'rejected_connections',
             'expired_keys', 'evicted_keys',
             'keyspace_hits', 'keyspace_misses']
+
         super(RedisMetrics, self).__init__(None, name=endpoint)
         self.setDaemon(daemon)
 
