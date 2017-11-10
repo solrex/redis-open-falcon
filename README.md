@@ -1,4 +1,4 @@
-# redis-open-falcon
+# redis-open-falcon - 好用就给个 Star 呗！
 Redis Monitor Script for Open Falcon
 
 ```
