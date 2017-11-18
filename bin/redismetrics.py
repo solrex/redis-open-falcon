@@ -19,18 +19,29 @@ class RedisMetrics(threading.Thread):
         self.password = password
         self.tags = tags
 
-        self.keyword_metrics = ['uptime_in_days', 'connected_clients', 'blocked_clients', 'used_memory', 'maxmemory',
-                              'used_memory_rss', 'used_memory_peak', 'used_memory_lua_human', 'mem_fragmentation_ratio',
-                              'total_commands_processed',
-                              'rejected_connections', 'expired_keys', 'evicted_keys', 'keyspace_hits',
-                              'keyspace_misses']
+        self.gauge_keywords  = ['uptime_in_days', 'connected_clients', 'blocked_clients',
+                                'used_memory', 'maxmemory', 'used_memory_rss', 'used_memory_peak',
+                                'used_memory_lua_human', 'mem_fragmentation_ratio']
 
         self.counter_keywords = ['total_commands_processed', 'rejected_connections',
-            'expired_keys', 'evicted_keys',
-            'keyspace_hits', 'keyspace_misses']
+                                 'expired_keys', 'evicted_keys',
+                                 'keyspace_hits', 'keyspace_misses']
+
+        self.db_keywords = ['keys', 'expires', 'avg_ttl']
 
         super(RedisMetrics, self).__init__(None, name=endpoint)
         self.setDaemon(daemon)
+
+    def new_metric(self, metric, value, type = 'GAUGE'):
+        return {
+            'counterType': type,
+            'metric': metric,
+            'endpoint': self.endpoint,
+            'timestamp': self.timestamp,
+            'step': self.falcon_step,
+            'tags': self.tags,
+            'value': value
+        }
 
     def run(self):
         try:
@@ -41,31 +52,28 @@ class RedisMetrics(threading.Thread):
         falcon_metrics = []
         # Statistics
         try:
-            timestamp = int(time.time())
+            self.timestamp = int(time.time())
             redis_info = self.redis.info()
+            #print json.dumps(redis_info)
             executable = os.path.basename(redis_info['executable'])
-            # Original metrics
-            for keyword in self.keyword_metrics:
-                falcon_metric = {
-                 'counterType': 'COUNTER' if keyword in self.counter_keywords else 'GAUGE',
-                    'metric': "redis." + keyword,
-                    'endpoint': self.endpoint,
-                    'timestamp': timestamp,
-                    'step': self.falcon_step,
-                    'tags': self.tags,
-                    'value': redis_info[keyword]
-                }
+            # Original keyword metrics
+            for keyword in self.gauge_keywords:
+                falcon_metric = self.new_metric("redis." + keyword, redis_info[keyword])
                 falcon_metrics.append(falcon_metric)
+            for keyword in self.counter_keywords:
+                falcon_metric = self.new_metric("redis." + keyword, redis_info[keyword], type='COUNTER')
+                falcon_metrics.append(falcon_metric)
+            # DB metrics
+            for key in redis_info:
+                if key.startswith("db") and type(redis_info[key]) == dict:
+                    for keyword in self.db_keywords:
+                        falcon_metric = self.new_metric('redis.' + key + '.' + keyword, redis_info[key][keyword])
+                        falcon_metrics.append(falcon_metric)
+                    falcon_metric = self.new_metric('redis.' + key + '.persist_keys',
+                                                    redis_info[key]['keys'] - redis_info[key]['expires'])
+                    falcon_metrics.append(falcon_metric)
             # Self defined metrics
-            falcon_metric = {
-                'counterType': 'GAUGE',
-                'metric': "redis.used_memory_ratio",
-                'endpoint': self.endpoint,
-                'timestamp': timestamp,
-                'step': self.falcon_step,
-                'tags': self.tags,
-                'value': float(redis_info['used_memory'])/redis_info['maxmemory']
-            }
+            falcon_metric = self.new_metric('redis.used_memory_ratio', float(redis_info['used_memory'])/redis_info['maxmemory'])
             falcon_metrics.append(falcon_metric)
             #print json.dumps(falcon_metrics)
             req = requests.post(self.falcon_url, data=json.dumps(falcon_metrics))
