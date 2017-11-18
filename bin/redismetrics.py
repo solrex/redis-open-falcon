@@ -9,13 +9,12 @@ import requests
 import os
 
 class RedisMetrics(threading.Thread):
-    def __init__(self, falcon_url, endpoint, host, port, db = 0, password = '', tags = '', falcon_step = 60, daemon = False):
+    def __init__(self, falcon_url, endpoint, host, port, password = '', tags = '', falcon_step = 60, daemon = False):
         self.falcon_url = falcon_url
         self.falcon_step = falcon_step
         self.host = host
         self.port = port
         self.endpoint = endpoint
-        self.db = db
         self.password = password
         self.tags = tags
 
@@ -45,7 +44,7 @@ class RedisMetrics(threading.Thread):
 
     def run(self):
         try:
-            self.redis = redis.Redis(host = self.host, port = self.port, db = self.db, password = self.password);
+            self.redis = redis.Redis(host = self.host, port = self.port, password = self.password);
         except Exception as e:
             print datetime.now(), "ERROR: [%s]" % self.endpoint, e
             return
@@ -75,9 +74,9 @@ class RedisMetrics(threading.Thread):
             # Self defined metrics
             falcon_metric = self.new_metric('redis.used_memory_ratio', float(redis_info['used_memory'])/redis_info['maxmemory'])
             falcon_metrics.append(falcon_metric)
-            #print json.dumps(falcon_metrics)
-            req = requests.post(self.falcon_url, data=json.dumps(falcon_metrics))
-            print datetime.now(), "INFO: [%s]" % self.endpoint, "[%s]" % self.falcon_url, req.text
+            print json.dumps(falcon_metrics)
+            #req = requests.post(self.falcon_url, data=json.dumps(falcon_metrics))
+            #print datetime.now(), "INFO: [%s]" % self.endpoint, "[%s]" % self.falcon_url, req.text
         except Exception, e:
             print datetime.now(), "ERROR: [%s]" % self.endpoint, e
             return
