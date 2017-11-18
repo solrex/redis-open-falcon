@@ -10,15 +10,15 @@ with open('conf/redis-open-falcon.yml', 'r') as ymlfile:
 threads = []
 
 for redis_cluster in config['redis-clusters']:
-    redis_metric_thread = redismetrics.RedisMetrics(config['falcon']['push_url'],
+    metric_thread = redismetrics.RedisMetrics(config['falcon']['push_url'],
                                                     redis_cluster['endpoint'],
                                                     redis_cluster['host'],
                                                     redis_cluster['port'],
                                                     redis_cluster['password'],
                                                     redis_cluster['tags'])
-    redis_metric_thread.start()
-    threads.append(redis_metric_thread)
+    metric_thread.start()
+    threads.append(metric_thread)
 
 for thread in threads:
-    thread.join(10)
+    thread.join(5)
 
