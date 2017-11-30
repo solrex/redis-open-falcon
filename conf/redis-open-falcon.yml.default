@@ -1,6 +1,7 @@
 falcon:
     push_url: http://127.0.0.1:6071/v1/push
+    step: 60
 
 # Redis clusters
 redis-clusters:
-    - {endpoint: "localhost", host: "127.0.0.1", port: 12700, password: "", tags: "n=myredis"}
+    - {endpoint: "localhost", host: "127.0.0.1", port: 12700, password: "", tags: ""}
