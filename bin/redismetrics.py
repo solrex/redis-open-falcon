@@ -47,12 +47,8 @@ class RedisMetrics(threading.Thread):
         try:
             self.redis = redis.Redis(host = self.redis_conf['host'], port = self.redis_conf['port'],
                                      password = self.redis_conf['password'])
-        except Exception as e:
-            print datetime.now(), "ERROR: [%s]" % self.redis_conf['endpoint'], e
-            return
-        falcon_metrics = []
-        # Statistics
-        try:
+            falcon_metrics = []
+            # Statistics
             self.timestamp = int(time.time())
             redis_info = self.redis.info()
             # Original keyword metrics
@@ -79,5 +75,8 @@ class RedisMetrics(threading.Thread):
             else:
                 req = requests.post(self.falcon_conf['push_url'], data=json.dumps(falcon_metrics))
                 print datetime.now(), "INFO: [%s]" % self.falcon_conf['endpoint'], "[%s]" % self.falcon_conf['push_url'], req.text
-        except Exception, e:
-            print datetime.now(), "ERROR: [%s]" % self.redis_conf['endpoint'], e.message
+        except Exception as e:
+            if self.falcon_conf['test_run']:
+                raise
+            else:
+                print datetime.now(), "ERROR: [%s]" % self.redis_conf['endpoint'], e.message
